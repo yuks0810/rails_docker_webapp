@@ -5,7 +5,7 @@ services:
       context: .
     env_file:
       - ./environments/db.env
-    command: bundle exec puma -C config/puma.rb
+    command: bash -c "bundle exec puma -C config/puma.rb && rails webpacker:install"
     volumes:
       - .:/webapp
       - public-data:/webapp/public
