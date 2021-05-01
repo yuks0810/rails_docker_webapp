@@ -89,3 +89,7 @@ dbの作成
 ```
 $ docker-compose exec app rails db:create
 ```
+
+以上の作業が終わったら、localhostにアクセスするとWelcomeページが見れる
+http://localhost
+http://localhost:80
