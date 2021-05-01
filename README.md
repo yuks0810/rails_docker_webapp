@@ -44,8 +44,7 @@ $ cp environments/puma.rb config/puma.rb
 ## database.yml編集
 
 ```
-$ cp /dev/null config/database.yml
-$ vim config/database.yml
+$ cp environments/database.template.yml config/database.yml
 ```
 
 ```database.yml
