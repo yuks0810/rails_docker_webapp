@@ -83,3 +83,9 @@ $ docker-compose exec db mysql -u root -p -e"$(cat db/grant_user.sql)"
 ```
 $ docker-compose exec db mysql -u user_name -p -e"show grants;"
 ```
+
+dbの作成
+
+```
+$ docker-compose exec app rails db:create
+```
