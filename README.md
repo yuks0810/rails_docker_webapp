@@ -71,3 +71,15 @@ test:
 ```
 $ docker-compose up --build
 ```
+
+## DBの設定
+
+ユーザー作成
+```
+$ docker-compose exec db mysql -u root -p -e"$(cat db/grant_user.sql)"
+```
+
+ユーザーが作成できたかを確認
+```
+$ docker-compose exec db mysql -u user_name -p -e"show grants;"
+```
