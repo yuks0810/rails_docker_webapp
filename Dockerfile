@@ -26,8 +26,8 @@ WORKDIR $APP_ROOT
 RUN gem update --system && \
     gem install --no-document bundler:2.1.4
 
-ADD Gemfile $APP_ROOT/Gemfile
-ADD Gemfile.lock $APP_ROOT/Gemfile.lock
+COPY Gemfile $APP_ROOT/Gemfile
+COPY Gemfile.lock $APP_ROOT/Gemfile.lock
 
 RUN bundle install
 

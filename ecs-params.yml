@@ -1,0 +1,42 @@
+version: 1
+task_definition:
+  task_size:
+    cpu_limit: "256"
+    mem_limit: "512"
+  service:
+    app:
+      mem_limit: 250
+      docker_volumes:
+        - name: tmp-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: tmp-data
+        - name: public-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: public-data
+    nginx:
+      mem_limit: 250
+      docker_volumes:
+        - name: tmp-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: tmp-data
+        - name: log-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: log-data
+        - name: public-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: public-data

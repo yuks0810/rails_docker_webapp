@@ -74,3 +74,10 @@ yarn-debug.log*
 # End of https://www.toptal.com/developers/gitignore/api/rails
 
 ecs_rails6_app_demo_user_credentials.csv
+
+/public/packs
+/public/packs-test
+/node_modules
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity

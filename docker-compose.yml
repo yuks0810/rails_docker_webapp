@@ -1,8 +1,9 @@
 version: '3'
 services:
   app:
-    build:
-      context: .
+    image: 184571202268.dkr.ecr.ap-northeast-1.amazonaws.com/rails/rails-docker-webapp
+    # build:
+    #   context: .
     env_file:
       - ./environments/db.env
     command: bash -c "bundle exec puma -C config/puma.rb && rails webpacker:install"
@@ -26,9 +27,9 @@ services:
       MYSQL_USER: myuser
       MYSQL_DATABASE: ecs_development
   web:
-    build:
-      context: containers/nginx
-    # command: bash -c "yarn install && rails webpacker:install && rails db:migrate && rails s -p 3000 -b 0.0.0.0"
+    image: 184571202268.dkr.ecr.ap-northeast-1.amazonaws.com/nginx/rails-docker-webapp:latest
+    # build:
+    #   context: containers/nginx
     volumes:
       - public-data:/webapp/public
       - tmp-data:/webapp/tmp
@@ -36,7 +37,6 @@ services:
       - 80:80
     depends_on:
       - app
-    tty: true
 volumes:
   public-data:
   tmp-data:

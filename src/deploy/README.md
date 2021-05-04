@@ -179,3 +179,63 @@ config.hosts << ALBのdns名を記載
 
 クラスター一覧で先ほど作成したクラスターを選択します。
 サービスという項目に作成ボタンがあるのでそちらをクリックします
+
+## clusterにデプロイ
+
+```
+$ ecs-cli compose -file docker-compose.production.yml --ecs-params ecs-params.yml up --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
+```
+
+```
+$ ecs-cli ps --cluster rails-docker-webapp-cluster --region ap-northeast-1 --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
+```
+
+### メモリ不足エラー
+
+こんな感じのエラーが出たので、インスタンスの数を1から2に変更。
+```
+bapp --ecs-profile rails-docker-webapp 
+INFO[0022] Using ECS task definition                     TaskDefinition="rails_docker_webapp:3"
+INFO[0022] Auto-enabling ECS Managed Tags               
+INFO[0022] Couldn't run containers                       reason="RESOURCE:MEMORY"
+```
+
+インスタンスを増やすコマンド
+```
+$ ecs-cli scale --capability-iam --size 2 --cluster rails-docker-webapp-cluster --region ap-northeast-1 --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
+```
+
+mem_limitを使って
+mem_limit: 268435456 # byte
+のように書くと良い。というのが載っていたのだが、docker-compose.ymlのversino3では、この書き方はサポートされておらず
+ecs_params.ymlを使って指定しないとだめらしい。
+
+参考：
+* https://t-kuni-tech.com/2020/10/17/ecs%E3%81%AEdocker-compose%E3%81%AE%E3%83%8F%E3%83%9E%E3%82%8A%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88%E3%81%BE%E3%81%A8%E3%82%81/
+* 公式サイト：
+  * https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-ecsparams.html
+  * https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-parameters.html
+  * https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-ecsparams.html
+
+
+
+
+その後再度clusterデプロイ実行
+
+```
+$ ecs-cli compose -file docker-compose.production.yml --ecs-params ecs-params.yml up --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
+WARN[0000] Skipping unsupported YAML option for service...  option name=depends_on service name=web
+INFO[0026] Using ECS task definition                     TaskDefinition="rails_docker_webapp:12"
+INFO[0026] Auto-enabling ECS Managed Tags               
+INFO[0027] Starting container...                         container=rails-docker-webapp-cluster/96eefca34f34444d86d918788281b9ee/app
+INFO[0027] Starting container...                         container=rails-docker-webapp-cluster/96eefca34f34444d86d918788281b9ee/web
+INFO[0027] Describe ECS container status                 container=rails-docker-webapp-cluster/96eefca34f34444d86d918788281b9ee/web desiredStatus=RUNNING lastStatus=PENDING taskDefinition="rails_docker_webapp:12"
+INFO[0027] Describe ECS container status                 container=rails-docker-webapp-cluster/96eefca34f34444d86d918788281b9ee/app desiredStatus=RUNNING lastStatus=PENDING taskDefinition="rails_docker_webapp:12"
+INFO[0051] Started container...                          container=rails-docker-webapp-cluster/96eefca34f34444d86d918788281b9ee/web desiredStatus=RUNNING lastStatus=RUNNING taskDefinition="rails_docker_webapp:12"
+INFO[0051] Started container...                          container=rails-docker-webapp-cluster/96eefca34f34444d86d918788281b9ee/app desiredStatus=RUNNING lastStatus=RUNNING taskDefinition="rails_docker_webapp:12"
+```
+
+
+```
+$ ecs-cli ps --cluster rails-docker-webapp-cluster --region ap-northeast-1 --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
+```
