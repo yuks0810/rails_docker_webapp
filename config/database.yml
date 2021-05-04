@@ -6,10 +6,18 @@ default: &default
   password: <%= ENV.fetch('MYSQL_PASSWORD') { 'password' } %>
   host: db
 
+# development:
+#   <<: *default
+#   database: webapp_development
 development:
   <<: *default
-  database: webapp_development
+  host: db
+  username: myuser
+  password: password
+  database: ecs_development
 
 test:
   <<: *default
   database: webapp_test
+
+# RDS_password = Jl8Fv1EGApBIKUJiQfWh
