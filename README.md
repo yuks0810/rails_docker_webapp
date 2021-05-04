@@ -67,3 +67,7 @@ MySQLへの接続
 ```
 $ docker-compose exec service_name mysql -u user_name -p [-D DB名]
 ```
+
+
+## デプロイ
+細かいことは書いていないので、一旦src/deploy/README.mdを参照
