@@ -70,7 +70,7 @@ $ docker-compose exec service_name mysql -u user_name -p [-D DB名]
 
 
 ## デプロイ
-細かいことは書いていないので、一旦src/deploy/README.mdを参照
+細かいことは書いていないので、一旦[src/deploy/README.md](https://github.com/yuks0810/rails_docker_webapp/tree/ecs_deploy/src/deploy)を参照
 
 ### buildとECRへのpush
 
