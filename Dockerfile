@@ -39,39 +39,3 @@ EXPOSE 3000
 RUN mkdir -p tmp/sockets
 
 CMD ["rails", "server", "-b", "0.0.0.0"]
-
-
-# FROM ruby:2.6.5
-
-# # リポジトリを更新し依存モジュールをインストール
-# RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-# RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-# RUN apt-get update -qq && \
-#     apt-get install -y  nodejs \
-#                         libpq-dev \
-#                         vim \
-#                         git \
-#                         yarn \
-#                         default-mysql-client
-
-# # ルート直下にwebappという名前で作業ディレクトリを作成（コンテナ内のアプリケーションディレクトリ）
-# RUN mkdir /webapp
-# WORKDIR /webapp
-
-# # ホストのGemfileとGemfile.lockをコンテナにコピー
-# COPY Gemfile /webapp/Gemfile
-# COPY Gemfile.lock /webapp/Gemfile.lock
-
-# # bundle installの実行
-# RUN bundle install
-# RUN rails webpacker:install && rails webpacker:compile
-
-# # ホストのアプリケーションディレクトリ内をすべてコンテナにコピー
-# COPY . /webapp
-
-# EXPOSE 3000
-
-# # puma.sockを配置するディレクトリを作成
-# RUN mkdir -p tmp/sockets
-
-# CMD ["rails", "server", "-b", "0.0.0.0"]

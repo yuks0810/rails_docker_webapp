@@ -26,4 +26,9 @@ test:
   <<: *default
   database: webapp_test
 
-# RDS_password = Jl8Fv1EGApBIKUJiQfWh
+production:
+  <<: *default
+  host: <%= ENV['MYSQL_HOST'] %>
+  username: <%= ENV['MYSQL_USER'] %>
+  password: <%= ENV['MYSQL_PASSWORD'] %>
+  database: ecs_development

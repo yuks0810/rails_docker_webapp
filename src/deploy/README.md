@@ -1,14 +1,10 @@
 
-## 参考：
-* https://qiita.com/saongtx7/items/f36909587014d746db73#%E4%B8%8B%E6%BA%96%E5%82%99
-* https://qiita.com/sibakenY/items/d81c1fa4ee1f41fee8d7#rails%E3%82%A2%E3%83%97%E3%83%AA%E3%81%AE%E4%BD%9C%E6%88%90
-* https://qiita.com/t-fujiwara/items/835cccbef7ec6d199251#%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E3%82%B0%E3%83%AB%E3%83%BC%E3%83%97
-* https://qiita.com/suin/items/19d65e191b96a0079417
-* https://www.slideshare.net/yoshikikobayashi7/ecs-146889234
+# ローカルのDocker上でrailsアプリを準備
 
-# 初期のrails newを実行
+## 初期のrails newを実行
+すでに既存のrailsアプリがあればこの工程は必要ない。
+
 $ docker-compose run --rm app rails new . --database=mysql --skip-bundle --skip-test
-
 
 config/database.ymlのdevelopmentの部分を下記の様に変更します。
 
@@ -21,23 +17,27 @@ development:
   database: ecs_development
 ```
 
-置き換えた後
+置き換えた後に以下を実行
 
 ```
 $ docker-compose up --build
 ```
 
 ## config/environments/development.rbに以下を追加
+
 ```
 $ vi config/environments/development.rb
 ```
 
 ```
 Rails.application.configure do
-  config.hosts.clear #追加
+  config.hosts.clear #追加（本番環境にデプロイするときはIPに書き換える）
 ```
 
 ##  socketファイルの置き場所を確保
+
+railsとnginxがtmp/sockets/puma.sockを介して通信する
+
 ```
 $ mkdir -p tmp/sockets
 ```
@@ -45,7 +45,7 @@ $ mkdir -p tmp/sockets
 ## config/puma.rbを書き換え
 
 ```
-  threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }.to_i
+threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }.to_i
 threads threads_count, threads_count
 port        ENV.fetch("PORT") { 3000 }
 environment ENV.fetch("RAILS_ENV") { "development" }
@@ -69,10 +69,13 @@ $ docker-compose up —build
 $ docker-compose exec app rails webpacker:install
 ```
 
+# AWSでECSにデプロイする工程
 
-## pem
+## キーペアの作成
+sshでECSのEC2インスタンスに接続するのに必要なためキーペアを作成
 
 キーペアを作成した後に、chmodで権限変更する
+
 ```
 $ chmod 400 rails-docker-webapp-keypair.pem
 ```
@@ -89,7 +92,7 @@ $ ecs-cli up --keypair rails-docker-webapp-keypair --capability-iam --size 1 --i
 ```
 
 参考ページ：
-https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-up.html
+* https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-up.html
 
 ## RDSの作成
 
@@ -100,15 +103,16 @@ awsのcliを使用できるように
 
 ```
 $ export AWS_PROFILE=iam-aws.yuks0810
-
 ```
+profileが複数ある場合は↑を実行した後に、aws cliコマンドを実行する
 
 ### rds作成コマンド
 
 * awsでぽちぽち作成
 * 無料枠
 * パブリックアクセスあり（後で変える予定）
-* 新しいセキュリティグループ
+* 新しいセキュリティグループを作成してRDSに紐付ける
+  * このセキュリティグループは3306ポートにアクセスできるように設定する
 
 インバウンドルールの変更：
 新しく作成したRDSのセキュリティグループのインバウンドルールを変更してローカルから接続できるか確認する
@@ -120,6 +124,8 @@ $ export AWS_PROFILE=iam-aws.yuks0810
 ```
 $ mysql -h rails-docker-webapp-db.ckjsvhuzo8hi.ap-northeast-1.rds.amazonaws.com -u root -p
 ```
+
+※この設定では全てのネットワークから接続できるようになってしまうので、後で設定を変更してインバウンドを絞り込む
 
 #### DBの作成
 
@@ -182,17 +188,26 @@ config.hosts << ALBのdns名を記載
 
 ## clusterにデプロイ
 
+デプロイコマンド
 ```
 $ ecs-cli compose -file docker-compose.production.yml --ecs-params ecs-params.yml up --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
 ```
 
+実行中のclusterのコンテナを確認
 ```
-$ ecs-cli ps --cluster rails-docker-webapp-cluster --region ap-northeast-1 --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
+$ watch -n 0.5 ecs-cli ps --cluster rails-docker-webapp-cluster --region ap-northeast-1 --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
+
+Name                                                              State    Ports                          TaskDefinition          Health
+rails-docker-webapp-cluster/25e215df68a544ff860ade0a575bd600/app  RUNNING  52.199.135.254:3000->3000/tcp  rails_docker_webapp:21  UNKNOWN
+rails-docker-webapp-cluster/25e215df68a544ff860ade0a575bd600/web  RUNNING  52.199.135.254:80->80/tcp      rails_docker_webapp:21  UNKNOWN
+rails-docker-webapp-cluster/a4f469986ab04fc9bb5fcb4644d9d322/app  RUNNING  18.183.196.217:3000->3000/tcp  rails_docker_webapp:22  UNKNOWN
+rails-docker-webapp-cluster/a4f469986ab04fc9bb5fcb4644d9d322/web  RUNNING  18.183.196.217:80->80/tcp      rails_docker_webapp:22  UNKNOWN
 ```
 
 ### メモリ不足エラー
 
-こんな感じのエラーが出たので、インスタンスの数を1から2に変更。
+こんな感じのエラーが出たのでメモリーを制限してタスクを実行して対応
+
 ```
 bapp --ecs-profile rails-docker-webapp 
 INFO[0022] Using ECS task definition                     TaskDefinition="rails_docker_webapp:3"
@@ -200,24 +215,77 @@ INFO[0022] Auto-enabling ECS Managed Tags
 INFO[0022] Couldn't run containers                       reason="RESOURCE:MEMORY"
 ```
 
-インスタンスを増やすコマンド
-```
-$ ecs-cli scale --capability-iam --size 2 --cluster rails-docker-webapp-cluster --region ap-northeast-1 --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
-```
-
+#### メモリ制御
 mem_limitを使って
 mem_limit: 268435456 # byte
 のように書くと良い。というのが載っていたのだが、docker-compose.ymlのversino3では、この書き方はサポートされておらず
 ecs_params.ymlを使って指定しないとだめらしい。
 
-参考：
+mem_limit参考ドキュメント：
 * https://t-kuni-tech.com/2020/10/17/ecs%E3%81%AEdocker-compose%E3%81%AE%E3%83%8F%E3%83%9E%E3%82%8A%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88%E3%81%BE%E3%81%A8%E3%82%81/
 * 公式サイト：
   * https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-ecsparams.html
   * https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-parameters.html
   * https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-ecsparams.html
 
+最終的にはecs-params.ymlファイルにリミットを記述して、実行コマンドでecs-params.ymlを使うことを引数で指定することで解決
+clusterのデプロイコマンドの中でこのような引数で指定する
 
+```
+--ecs-params ecs-params.yml
+```
+
+ecs-params.ymlの内容
+
+```ecs-params.yml
+version: 1
+task_definition:
+  task_size:
+    cpu_limit: "256"
+    mem_limit: "512"
+  service:
+    app:
+      mem_limit: 250
+      docker_volumes:
+        - name: tmp-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: tmp-data
+        - name: public-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: public-data
+    nginx:
+      mem_limit: 250
+      docker_volumes:
+        - name: tmp-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: tmp-data
+        - name: log-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: log-data
+        - name: public-data
+          scope: shared
+          autoprovision:  true
+          driver: local
+          labels:
+              string: public-data
+```
+
+## volumeの指定
+
+docker_volumes: をecs-params.ymlの中で指定して、volumeをタスク定義に組み込む
+（ecs-params.yml参照）
 
 
 その後再度clusterデプロイ実行
@@ -235,7 +303,10 @@ INFO[0051] Started container...                          container=rails-docker-
 INFO[0051] Started container...                          container=rails-docker-webapp-cluster/96eefca34f34444d86d918788281b9ee/app desiredStatus=RUNNING lastStatus=RUNNING taskDefinition="rails_docker_webapp:12"
 ```
 
-
-```
-$ ecs-cli ps --cluster rails-docker-webapp-cluster --region ap-northeast-1 --cluster-config rails-docker-webapp --ecs-profile rails-docker-webapp
-```
+### 今回参考にしたECS参考ドキュメント：
+* [初心者でもできる！ ECS × ECR × CircleCIでRailsアプリケーションをコンテナデプロイ](https://qiita.com/saongtx7/items/f36909587014d746db73)
+* [(ECS,Rails6)ロードバランサー ALB と データベース RDS とECRを使ってコマンドラインから ECSにRails6のアプリをデプロイ](https://qiita.com/sibakenY/items/d81c1fa4ee1f41fee8d7)
+*[AWS CLIでよく使うコマンド集](https://qiita.com/t-fujiwara/items/835cccbef7ec6d199251)
+* [《滅びの呪文》Docker Composeで作ったコンテナ、イメージ、ボリューム、ネットワークを一括完全消去する便利コマンド](https://qiita.com/suin/items/19d65e191b96a0079417)
+* [ニワトリでもわかるECS入門](https://www.slideshare.net/yoshikikobayashi7/ecs-146889234)
+* [【図解】Dockerの全体像を理解する -前編-](https://qiita.com/etaroid/items/b1024c7d200a75b992fc)
