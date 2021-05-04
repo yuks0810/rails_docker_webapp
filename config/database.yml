@@ -8,13 +8,19 @@ default: &default
 
 # development:
 #   <<: *default
-#   database: webapp_development
+#   host: db
+#   username: myuser
+#   password: password
+#   database: ecs_development
+
+# RDSに接続する用
 development:
   <<: *default
-  host: db
-  username: myuser
-  password: password
+  host: <%= ENV['MYSQL_HOST'] %>
+  username: <%= ENV['MYSQL_USER'] %>
+  password: <%= ENV['MYSQL_PASSWORD'] %>
   database: ecs_development
+
 
 test:
   <<: *default

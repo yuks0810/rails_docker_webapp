@@ -1,0 +1,24 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:PassRole",
+                "iam:DetachRolePolicy",
+                "ec2:DeleteSecurityGroup",
+                "iam:RemoveRoleFromInstanceProfile",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "ec2:DeleteInternetGateway",
+                "iam:AttachRolePolicy",
+                "iam:AddRoleToInstanceProfile",
+                "ec2:DeleteRouteTable"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
