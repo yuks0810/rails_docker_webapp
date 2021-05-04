@@ -6,21 +6,20 @@ default: &default
   password: <%= ENV.fetch('MYSQL_PASSWORD') { 'password' } %>
   host: db
 
-# development:
-#   <<: *default
-#   host: db
-#   username: myuser
-#   password: password
-#   database: ecs_development
-
-# RDSに接続する用
 development:
   <<: *default
-  host: <%= ENV['MYSQL_HOST'] %>
-  username: <%= ENV['MYSQL_USER'] %>
-  password: <%= ENV['MYSQL_PASSWORD'] %>
+  host: db
+  username: myuser
+  password: password
   database: ecs_development
 
+# RDSに接続する用
+# development:
+#   <<: *default
+#   host: <%= ENV['MYSQL_HOST'] %>
+#   username: <%= ENV['MYSQL_USER'] %>
+#   password: <%= ENV['MYSQL_PASSWORD'] %>
+#   database: ecs_development
 
 test:
   <<: *default

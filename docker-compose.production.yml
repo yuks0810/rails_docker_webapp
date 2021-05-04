@@ -11,11 +11,11 @@ services:
       TZ: "Japan"
     ports:
       - "3000:3000"
-    # volumes:
-    #   - .:/webapp
-    #   - public-data:/webapp/public
-    #   - tmp-data:/webapp/tmp
-    #   - log-data:/webapp/log
+    volumes:
+      - .:/webapp
+      - public-data:/webapp/public
+      - tmp-data:/webapp/tmp
+      - log-data:/webapp/log
     logging:
       driver: awslogs
       options:
@@ -29,9 +29,9 @@ services:
       - 80:80
     depends_on:
       - app
-    # volumes:
-    #   - public-data:/webapp/public
-    #   - tmp-data:/webapp/tmp
+    volumes:
+      - public-data:/webapp/public
+      - tmp-data:/webapp/tmp
     tty: true
     logging:
       driver: awslogs
